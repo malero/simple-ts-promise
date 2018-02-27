@@ -136,4 +136,13 @@ describe('Promise', () => {
         expect(dummy.callback).toHaveBeenCalled();
         expect(dummy2.callback).not.toHaveBeenCalled();
     });
+
+    it("reject static function should work properly", () => {
+        const t: Test = new Test();
+        expect(dummy.callback).not.toHaveBeenCalled();
+        expect(dummy2.callback).not.toHaveBeenCalled();
+        Promise.reject("failed").then(dummy.callback.bind(dummy), dummy2.callback.bind(dummy2));
+        expect(dummy.callback).not.toHaveBeenCalled();
+        expect(dummy2.callback).toHaveBeenCalled();
+    });
 });
