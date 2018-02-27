@@ -145,4 +145,15 @@ describe('Promise', () => {
         expect(dummy.callback).not.toHaveBeenCalled();
         expect(dummy2.callback).toHaveBeenCalled();
     });
+
+    it("it should be rejected if error is thrown", () => {
+        const t: Test = new Test();
+        expect(dummy.callback).not.toHaveBeenCalled();
+        expect(dummy2.callback).not.toHaveBeenCalled();
+        new Promise<Test>((resolve, reject) => {
+            throw Error('failed');
+        }).then(dummy.callback.bind(dummy), dummy2.callback.bind(dummy2));
+        expect(dummy.callback).not.toHaveBeenCalled();
+        expect(dummy2.callback).toHaveBeenCalled();
+    });
 });
