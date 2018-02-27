@@ -19,7 +19,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "simple-ts-event-dispatcher": "^0.1.2"
+    "simple-ts-event-dispatcher": "^0.1.3"
   },
   "devDependencies": {
     "@types/jasmine": "^2.6.0",
