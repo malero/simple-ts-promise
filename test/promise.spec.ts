@@ -2,6 +2,11 @@ import {IDeferred, Promise} from "../src/Promise";
 
 
 class Test {}
+class Testing {
+    constructor(
+        public test: Test
+    ) {}
+}
 
 
 describe('Promise', () => {
@@ -155,5 +160,17 @@ describe('Promise', () => {
         }).then(dummy.callback.bind(dummy), dummy2.callback.bind(dummy2));
         expect(dummy.callback).not.toHaveBeenCalled();
         expect(dummy2.callback).toHaveBeenCalled();
+    });
+
+    it("it should process multiple then statements in the correct order", () => {
+        const d: IDeferred<Test> = Promise.defer<Test>();
+        const t: Test = new Test();
+        d.promise.then<Testing>((result: Test) => {
+            expect(d.promise['result']).toBe(result);
+            return new Testing(result);
+        }).then((result: Testing | undefined): Testing => {
+            expect((result as any as Testing).test).toBe(t);
+            return result as any as Testing;
+        });
     });
 });

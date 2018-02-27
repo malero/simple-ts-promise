@@ -3,7 +3,6 @@
  * Documentation and implementation based off of:
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
  *
- * Recreating wheels!
  */
 
 import {EventDispatcher} from "simple-ts-event-dispatcher";
