@@ -1,7 +1,11 @@
 import {IDeferred, Promise} from "../src/Promise";
 
 
-class Test {}
+class Test {
+    constructor(
+        public value: string = 'test'
+    ) {}
+}
 class Testing {
     constructor(
         public test: Test
@@ -165,6 +169,33 @@ describe('Promise', () => {
     it("it should process multiple then statements in the correct order", () => {
         const d: IDeferred<Test> = Promise.defer<Test>();
         const t: Test = new Test();
+        d.promise.then<Test>((result: Test): Test => {
+            expect(result.value).toBe('test');
+            result.value = 'then 1';
+            return result;
+        });
+        d.promise.then<Test>((result: Test): Test => {
+            expect(result.value).toBe('then 1');
+            result.value = 'then 2';
+            return result;
+        });
+        d.promise.then<Test>((result: Test): Test => {
+            expect(result.value).toBe('then 2');
+            result.value = 'then 3';
+            return result;
+        });
+        d.promise.then<Test>((result: Test): Test => {
+            expect(result.value).toBe('then 3');
+            result.value = 'then 4';
+            return result;
+        });
+
+        d.resolve(t);
+    });
+
+    it("it should process chained then statements in the correct order", () => {
+        const d: IDeferred<Test> = Promise.defer<Test>();
+        const t: Test = new Test();
         d.promise.then<Testing>((result: Test) => {
             expect(d.promise['result']).toBe(result);
             return new Testing(result);
@@ -172,5 +203,6 @@ describe('Promise', () => {
             expect((result as any as Testing).test).toBe(t);
             return result as any as Testing;
         });
+        d.resolve(t);
     });
 });

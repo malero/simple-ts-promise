@@ -1,5 +1,6 @@
 import { EventDispatcher } from "simple-ts-event-dispatcher";
 export interface IDeferred<T> {
+    [key: string]: any;
     promise: Promise<T>;
     resolve(result: T): void;
     reject(reason: string): void;
@@ -10,7 +11,7 @@ export declare enum EPromiseStates {
     REJECTED = 2,
 }
 export interface IPromise<T> {
-    then<X = T>(success?: (result?: T) => X, error?: (reason?: string) => string): IPromise<X>;
+    then<X = T>(success?: (result: T) => X, error?: (reason: string) => string): IPromise<X>;
     catch(onRejected: (reason: string) => string): IPromise<string>;
     finally<X = T>(finallyCallback: (result: T | string) => X | string): IPromise<X>;
 }

@@ -21,7 +21,7 @@ export enum EPromiseStates {
 }
 
 export interface IPromise<T> {
-    then<X = T>(success?: (result?: T) => X, error?: (reason?: string) => string): IPromise<X>;
+    then<X = T>(success?: (result: T) => X, error?: (reason: string) => string): IPromise<X>;
     catch(onRejected: (reason: string) => string): IPromise<string>;
     finally<X = T>(finallyCallback: (result: T | string) => X | string): IPromise<X>;
 }

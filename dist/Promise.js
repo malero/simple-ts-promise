@@ -4,7 +4,6 @@
  * Documentation and implementation based off of:
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
  *
- * Recreating wheels!
  */
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -42,7 +41,7 @@ var Promise = /** @class */ (function (_super) {
         return _this;
     }
     Promise.defer = function () {
-        var promise = new Promise(function (res, rej) { return; });
+        var promise = new Promise(function (res, rej) { });
         return {
             promise: promise,
             resolve: promise._resolve.bind(promise),
