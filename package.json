@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "A simple implementation of promises in Typescript",
   "keywords": [
+    "promise",
     "typescript",
     "event",
     "dispatcher",
