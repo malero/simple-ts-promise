@@ -4,6 +4,7 @@
  * Documentation and implementation based off of:
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
  *
+ * Recreating wheels!
  */
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -29,8 +30,8 @@ var Promise = /** @class */ (function (_super) {
     __extends(Promise, _super);
     function Promise(executor) {
         var _this = _super.call(this) || this;
-        _this.result = null;
-        _this.state = EPromiseStates.PENDING;
+        _this._result = null;
+        _this._state = EPromiseStates.PENDING;
         _this.promiseClass = (Object.getPrototypeOf(_this).constructor);
         try {
             executor(_this._resolve.bind(_this), _this._reject.bind(_this));
@@ -40,6 +41,20 @@ var Promise = /** @class */ (function (_super) {
         }
         return _this;
     }
+    Object.defineProperty(Promise.prototype, "state", {
+        get: function () {
+            return this._state;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Promise.prototype, "result", {
+        get: function () {
+            return this._result;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Promise.defer = function () {
         var promise = new Promise(function (res, rej) { });
         return {
@@ -83,27 +98,44 @@ var Promise = /** @class */ (function (_super) {
      */
     Promise.all = function (iter) {
         var deferred = Promise.defer();
+        var done = true;
         for (var _i = 0, iter_1 = iter; _i < iter_1.length; _i++) {
             var promise = iter_1[_i];
-            promise.once('fulfilled', function (result) {
-                var done = true;
-                var results = [];
-                for (var _i = 0, iter_2 = iter; _i < iter_2.length; _i++) {
-                    var p = iter_2[_i];
-                    if (p.state !== EPromiseStates.FULFILLED) {
-                        done = false;
-                        break;
-                    }
-                    results.push(p.result);
-                }
-                if (done)
-                    deferred.resolve(results);
-            });
-            promise.once('rejected', function (reason) {
-                deferred.reject(reason);
-            });
+            if (promise.state == EPromiseStates.PENDING) {
+                done = false;
+                promise.once('fulfilled', function (result) {
+                    Promise.poolResults(iter, deferred);
+                });
+                promise.once('rejected', function (reason) {
+                    deferred.reject(reason);
+                });
+            }
+            else if (promise.state == EPromiseStates.REJECTED) {
+                deferred.reject(promise.result);
+                done = false;
+                break;
+            }
         }
+        if (done)
+            Promise.poolResults(iter, deferred);
         return deferred.promise;
+    };
+    Promise.poolResults = function (iter, deferred) {
+        var done = true;
+        var results = [];
+        for (var _i = 0, iter_2 = iter; _i < iter_2.length; _i++) {
+            var p = iter_2[_i];
+            if (p.state === EPromiseStates.REJECTED) {
+                deferred.reject(p.result);
+                break;
+            }
+            else if (p.state === EPromiseStates.PENDING) {
+                done = false;
+            }
+            results.push(p.result);
+        }
+        if (done)
+            deferred.resolve(results);
     };
     /*
      * Returns a promise that fulfills or rejects as soon as one of the promises in the iterable fulfills or rejects,
@@ -169,15 +201,15 @@ var Promise = /** @class */ (function (_super) {
     Promise.prototype._resolve = function (result) {
         if (this.state !== EPromiseStates.PENDING)
             return;
-        this.state = EPromiseStates.FULFILLED;
-        this.result = result;
+        this._state = EPromiseStates.FULFILLED;
+        this._result = result;
         this.trigger('fulfilled', result);
     };
     Promise.prototype._reject = function (reason) {
         if (this.state !== EPromiseStates.PENDING)
             return;
-        this.state = EPromiseStates.REJECTED;
-        this.result = reason;
+        this._state = EPromiseStates.REJECTED;
+        this._result = reason;
         this.trigger('rejected', reason);
     };
     return Promise;
