@@ -15,13 +15,19 @@ export interface IDeferred<T> {
     reject(reason: string): void;
 }
 
+export type TResolve<T> = (result: T) => void;
+export type TReject = (reason: string) => void;
+export type TResult<T> = T | string | null;
+
 export enum EPromiseStates {
     PENDING,
     FULFILLED,
     REJECTED
 }
 
-export interface IPromise<T> {
+export interface IPromise<T> extends EventDispatcher {
+    state: EPromiseStates;
+    result: TResult<T>;
     then<X = T>(success?: (result?: T) => X, error?: (reason?: string) => string): IPromise<X>;
     catch(onRejected: (reason: string) => string): IPromise<string>;
     finally<X = T>(finallyCallback: (result: T | string) => X | string): IPromise<X>;
@@ -29,23 +35,28 @@ export interface IPromise<T> {
 
 export function noop<T = any>(result?: T): T { return result as T; }
 
-export type TResolve<T> = (result: T) => void;
-export type TReject = (reason: string) => void;
-
 export class Promise<T> extends EventDispatcher implements IPromise<T> {
-    protected state: EPromiseStates;
-    protected result: T | string | null = null;
+    protected _state: EPromiseStates;
+    protected _result: TResult<T>  = null;
     private promiseClass: typeof Promise;
 
     constructor(executor: (resolve: TResolve<T>, reject: TReject) => void) {
         super();
-        this.state = EPromiseStates.PENDING;
+        this._state = EPromiseStates.PENDING;
         this.promiseClass = (Object.getPrototypeOf(this).constructor);
         try {
             executor(this._resolve.bind(this), this._reject.bind(this));
         } catch (e) {
             this._reject(e);
         }
+    }
+
+    public get state(): EPromiseStates {
+        return this._state;
+    }
+
+    public get result(): TResult<T> {
+        return this._result;
     }
 
     public static defer<T>(): IDeferred<T> {
@@ -64,7 +75,7 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
      * promise will be fulfilled with the value. Generally, if you don't know if a value is a promise or not,
      * Promise.resolve(value) it instead and work with the return value as a promise.
      */
-    public static resolve<T>(result: T): Promise<T> {
+    public static resolve<T>(result: T): IPromise<T> {
         return new Promise<T>((resolve: TResolve<T>): void => {
             if (result instanceof Promise) {
                 result.then((innerResult: T) => {
@@ -92,7 +103,7 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
      * If the returned promise rejects, it is rejected with the reason from the first promise in the iterable that
      * rejected. This method can be useful for aggregating results of multiple promises.
      */
-    public static all<T>(iter: Promise<T>[]): IPromise<T[]> {
+    public static all<T>(iter: IPromise<T>[]): IPromise<T[]> {
         const deferred: IDeferred<T[]> = Promise.defer<T[]>();
         let done: boolean = true;
         for (const promise of iter) {
@@ -118,7 +129,7 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
         return deferred.promise;
     }
 
-    public static poolResults<T>(iter: Promise<T>[], deferred: IDeferred<T[]>) {
+    public static poolResults<T>(iter: IPromise<T>[], deferred: IDeferred<T[]>) {
         let done: boolean = true;
         const results: T[] = [];
         for (const p of iter) {
@@ -138,7 +149,7 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
      * Returns a promise that fulfills or rejects as soon as one of the promises in the iterable fulfills or rejects,
      * with the value or reason from that promise.
      */
-    public static race<T>(iter: Promise<T>[]): IPromise<T> {
+    public static race<T>(iter: IPromise<T>[]): IPromise<T> {
         const deferred: IDeferred<T> = Promise.defer<T>();
 
         for (const promise of iter) {
@@ -202,15 +213,15 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
 
     protected _resolve(result: T): void {
         if (this.state !== EPromiseStates.PENDING) return;
-        this.state = EPromiseStates.FULFILLED;
-        this.result = result;
+        this._state = EPromiseStates.FULFILLED;
+        this._result = result;
         this.trigger('fulfilled', result);
     }
 
     protected _reject(reason: string): void {
         if (this.state !== EPromiseStates.PENDING) return;
-        this.state = EPromiseStates.REJECTED;
-        this.result = reason;
+        this._state = EPromiseStates.REJECTED;
+        this._result = reason;
         this.trigger('rejected', reason);
     }
 }
