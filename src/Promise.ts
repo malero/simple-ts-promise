@@ -3,6 +3,7 @@
  * Documentation and implementation based off of:
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
  *
+ * Recreating wheels!
  */
 
 import {EventDispatcher} from "simple-ts-event-dispatcher";
@@ -21,7 +22,7 @@ export enum EPromiseStates {
 }
 
 export interface IPromise<T> {
-    then<X = T>(success?: (result: T) => X, error?: (reason: string) => string): IPromise<X>;
+    then<X = T>(success?: (result?: T) => X, error?: (reason?: string) => string): IPromise<X>;
     catch(onRejected: (reason: string) => string): IPromise<string>;
     finally<X = T>(finallyCallback: (result: T | string) => X | string): IPromise<X>;
 }
@@ -78,7 +79,7 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
     /*
      * Returns a Promise object that is rejected with the given reason.
      */
-    public static reject(reason: string): Promise<void> {
+    public static reject(reason: string): IPromise<void> {
         return new Promise<void>((resolve: TResolve<void>, reject: TReject): void => {
             reject(reason);
         });
@@ -91,36 +92,53 @@ export class Promise<T> extends EventDispatcher implements IPromise<T> {
      * If the returned promise rejects, it is rejected with the reason from the first promise in the iterable that
      * rejected. This method can be useful for aggregating results of multiple promises.
      */
-    public static all<T>(iter: Promise<T>[]): Promise<T[]> {
+    public static all<T>(iter: Promise<T>[]): IPromise<T[]> {
         const deferred: IDeferred<T[]> = Promise.defer<T[]>();
+        let done: boolean = true;
         for (const promise of iter) {
-            promise.once('fulfilled', (result: T): void => {
-                let done: boolean = true;
-                const results: T[] = [];
-                for (const p of iter) {
-                    if (p.state !== EPromiseStates.FULFILLED) {
-                        done = false;
-                        break;
-                    }
-                    results.push(p.result as T);
-                }
-                if (done)
-                    deferred.resolve(results);
-            });
+            if (promise.state == EPromiseStates.PENDING) {
+                done = false;
+                promise.once('fulfilled', (result: T): void => {
+                    Promise.poolResults(iter, deferred);
+                });
 
-            promise.once('rejected', (reason: string): void => {
-                deferred.reject(reason);
-            });
+                promise.once('rejected', (reason: string): void => {
+                    deferred.reject(reason);
+                });
+            } else if(promise.state == EPromiseStates.REJECTED) {
+                deferred.reject(promise.result as string);
+                done = false;
+                break;
+            }
         }
 
+        if (done)
+            Promise.poolResults(iter, deferred);
+
         return deferred.promise;
+    }
+
+    public static poolResults<T>(iter: Promise<T>[], deferred: IDeferred<T[]>) {
+        let done: boolean = true;
+        const results: T[] = [];
+        for (const p of iter) {
+            if (p.state === EPromiseStates.REJECTED) {
+                deferred.reject(p.result as string);
+                break;
+            } else if (p.state === EPromiseStates.PENDING) {
+                done = false;
+            }
+            results.push(p.result as T);
+        }
+        if (done)
+            deferred.resolve(results);
     }
 
     /*
      * Returns a promise that fulfills or rejects as soon as one of the promises in the iterable fulfills or rejects,
      * with the value or reason from that promise.
      */
-    public static race<T>(iter: Promise<T>[]): Promise<T> {
+    public static race<T>(iter: Promise<T>[]): IPromise<T> {
         const deferred: IDeferred<T> = Promise.defer<T>();
 
         for (const promise of iter) {
