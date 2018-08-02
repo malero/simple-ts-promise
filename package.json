@@ -21,7 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "hoek": "^5.0.3",
-    "npm": "^6.0.0",
+    "npm": "^6.3.0",
     "simple-ts-event-dispatcher": "^0.1.5",
     "to": "^0.2.9",
     "update": "^0.7.4"
@@ -33,7 +33,7 @@
     "karma": "^1.5.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-jasmine": "^1.1.0",
-    "karma-typescript": "^3.0.5",
+    "karma-typescript": "^3.0.13",
     "nyc": "^11.5.0",
     "typescript": "^2.5.2"
   },

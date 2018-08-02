@@ -155,7 +155,7 @@ describe('Promise', () => {
         expect(dummy2.callback).toHaveBeenCalled();
     });
 
-    it("it should be rejected if error is thrown", () => {
+    it("should be rejected if error is thrown", () => {
         const t: Test = new Test();
         expect(dummy.callback).not.toHaveBeenCalled();
         expect(dummy2.callback).not.toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe('Promise', () => {
         expect(dummy2.callback).toHaveBeenCalled();
     });
 
-    it("it should process multiple then statements in the correct order", () => {
+    it("should process multiple then statements in the correct order", () => {
         const d: IDeferred<Test> = Promise.defer<Test>();
         const t: Test = new Test();
         d.promise.then<Test>((result: Test): Test => {
@@ -193,7 +193,7 @@ describe('Promise', () => {
         d.resolve(t);
     });
 
-    it("it should process chained then statements in the correct order", () => {
+    it("should process chained then statements in the correct order", () => {
         const d: IDeferred<Test> = Promise.defer<Test>();
         const t: Test = new Test();
         d.promise.then<Testing>((result: Test) => {
@@ -204,5 +204,68 @@ describe('Promise', () => {
             return result as any as Testing;
         });
         d.resolve(t);
+    });
+
+    it("should process callback on previously resolved promise", (done) => {
+        const d: IDeferred<Test> = Promise.defer<Test>();
+        const t: Test = new Test();
+        d.resolve(t);
+
+        d.promise.then<Testing>((result: Test) => {
+            expect(d.promise['result']).toBe(result);
+            done();
+            return new Testing(result);
+        });
+    });
+
+    it("should process callback on previously rejected promise", (done) => {
+        const d: IDeferred<Test> = Promise.defer<Test>();
+        d.reject('Failure.');
+
+        d.promise.then<Testing>((result: Test) => {
+            expect(false).toBe(true);
+            return new Testing(result);
+        }, (reason?: string): string => {
+            expect(reason).toBe('Failure.');
+            done();
+
+            return reason as string;
+        });
+    });
+
+    it("should process Promise.all callbacks with previously resolved promises", (done) => {
+        const d: IDeferred<Test> = Promise.defer<Test>();
+        const d2: IDeferred<Test> = Promise.defer<Test>();
+        const t: Test = new Test();
+        const t2: Test = new Test();
+        d2.resolve(t2);
+
+        Promise.all<Test>([d.promise, d2.promise]).then((results?: Test[]) => {
+            if (results === undefined) return;
+            expect(d.promise['result']).toBe(results[0]);
+            expect(d2.promise['result']).toBe(results[1]);
+            done();
+        });
+
+        d.resolve(t);
+    });
+
+    it("should process Promise.all callbacks with previously rejected promises", (done) => {
+        const d: IDeferred<Test> = Promise.defer<Test>();
+        const d2: IDeferred<Test> = Promise.defer<Test>();
+        const t: Test = new Test();
+        const t2: Test = new Test();
+        d.reject('Failure.');
+
+        Promise.all<Test>([d.promise, d2.promise]).then((results?: Test[]) => {
+            expect(false).toBe(true);
+        }, (reason?: string): string => {
+            expect(reason).toBe('Failure.');
+            done();
+
+            return reason as string;
+        });
+
+        d2.resolve(t2);
     });
 });
