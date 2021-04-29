@@ -22,6 +22,12 @@ module.exports = function(config) {
 
         logLevel: config.LOG_DEBUG,
 
-        browsers: ['Chrome']
+        browsers: ['ChromeHeadlessNoSandbox'],
+        customLaunchers: {
+            ChromeHeadlessNoSandbox: {
+                base: 'ChromeHeadless',
+                flags: ['--no-sandbox']
+            }
+        },
     });
 };
