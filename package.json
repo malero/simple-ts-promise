@@ -1,6 +1,6 @@
 {
   "name": "simple-ts-promise",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A simple implementation of promises in Typescript",
   "keywords": [
     "promise",
