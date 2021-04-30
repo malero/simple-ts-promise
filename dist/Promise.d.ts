@@ -11,7 +11,7 @@ export declare type TResult<T> = T | string | null;
 export declare enum EPromiseStates {
     PENDING = 0,
     FULFILLED = 1,
-    REJECTED = 2,
+    REJECTED = 2
 }
 export interface IPromise<T> extends EventDispatcher {
     state: EPromiseStates;
@@ -26,8 +26,8 @@ export declare class Promise<T> extends EventDispatcher implements IPromise<T> {
     protected _result: TResult<T>;
     private promiseClass;
     constructor(executor: (resolve: TResolve<T>, reject: TReject) => void);
-    readonly state: EPromiseStates;
-    readonly result: TResult<T>;
+    get state(): EPromiseStates;
+    get result(): TResult<T>;
     static defer<T>(): IDeferred<T>;
     static resolve<T>(result: T): IPromise<T>;
     static reject(reason: string): IPromise<void>;
